@@ -37,7 +37,13 @@ function calc(raw){
   // 1. MFN
   let mfnPct = 0, mfnText = 'Free', mfnSpecific = false;
   if(base){ const p = parseMFN(base[0]); mfnPct = p.pct||0; mfnText = p.text; mfnSpecific = p.specific; r.desc = base[1]; }
-  else { r.desc = ''; r.notes.push('提示：该8位子目未在现行HTS基础表中找到（可能已改号或为10位统计号），请核对。'); }
+  else {
+    r.desc = '';
+    const p6 = n.c8.slice(0,7); // 6位前缀，如 8471.6
+    r.candidates = BASE.filter(b=>b[0].startsWith(p6)).map(b=>b[0]).slice(0,12);
+    if(r.candidates.length) r.notes.push('提示：未找到'+n.c8+'；美国HTS中 '+p6+' 项下子目见下方候选（中国海关编码与美国HTS在第7-8位常有差异，可点击候选逐个试算）。');
+    else r.notes.push('提示：该8位子目未在现行HTS基础表中找到（可能已改号、为10位统计号或编码有误），请核对。');
+  }
   r.descCn = (typeof CNAMES!=='undefined' && CNAMES[n.c8]) || '';
   r.rows.push({layer:'最惠国税率（MFN）', rate:mfnText, add:mfnPct, addText:mfnPct+'%', basis:'HTS第1—97章General栏', zero:mfnPct===0});
   if(mfnSpecific) r.notes.push('该税号最惠国税率为从量/复合税（'+mfnText+'），从价合计未包含从量部分，需按进口数量另计。');
@@ -116,9 +122,15 @@ function renderCalc(r){
   const box = document.getElementById('qResult');
   box.style.display='block';
   if(r.status==='invalid'){ box.innerHTML='<div class="banner maybe">无法识别税号格式，请输入8位或10位HTS税号。</div>'; return; }
-  let h = '<div class="banner '+(r.total>0?'hit':'none')+'">'+esc(r.c8)+(r.c10?('（'+esc(r.c10)+'）'):'')+'　加征关税总叠加值：+'+r.total+'%＝最惠国'+(r.rows[0].add)+'%＋各项加征'+(r.total-r.rows[0].add).toFixed(2).replace(/\.00$/,'')+'%</div>';
+  const bannerCn = r.descCn ? '（'+esc(r.descCn.length>26?r.descCn.slice(0,26)+'…':r.descCn)+'）' : (r.candidates!==undefined ? '（未找到该编码）' : '');
+  let h = '<div class="banner '+(r.total>0?'hit':'none')+'">'+esc(r.c8)+bannerCn+(r.c10?('（'+esc(r.c10)+'）'):'')+'　加征关税总叠加值：+'+r.total+'%＝最惠国'+(r.rows[0].add)+'%＋各项加征'+(r.total-r.rows[0].add).toFixed(2).replace(/\.00$/,'')+'%</div>';
+  if(r.candidates && r.candidates.length){
+    h += '<div class="note" style="margin-bottom:10px">未找到 '+esc(r.c8)+'；美国HTS '+esc(r.c8.slice(0,7))+' 项下候选子目（点击试算）：'
+      + r.candidates.map(c=>'<a href="javascript:void(0)" style="color:var(--navy);font-weight:bold" onclick="document.getElementById(\'qInput\').value=\''+c+'\';runCalc()">'+c+'</a>').join('、') + '</div>';
+  }
   if(r.descCn) h += '<div class="note" style="margin-bottom:10px">品名（中文参考）：'+esc(r.descCn)+(r.desc?('<br><span style="color:#8a94a0;font-size:11.5px">品名（现行HTS英文）：'+esc(r.desc)+'</span>'):'')+'</div>';
   else if(r.desc) h += '<div class="note" style="margin-bottom:10px">品名（现行HTS）：'+esc(r.desc)+'</div>';
+  else h += '<div class="note" style="margin-bottom:10px">品名：未找到——该编码不在现行美国HTS中，无法提供品名翻译。</div>';
   h += '<table class="stack"><tr><th style="width:26%">措施层级</th><th style="width:10%">税率</th><th style="width:16%">加征值（从价）</th><th>加征依据</th></tr>';
   for(const row of r.rows){
     h += '<tr'+(row.zero?' class="zero"':'')+'><td>'+esc(row.layer)+'</td><td>'+esc(row.rate)+'</td><td class="add'+(row.zero?' zero':'')+'">'+esc(row.addText)+'</td><td style="font-size:12px">'+esc(row.basis)+'</td></tr>';
