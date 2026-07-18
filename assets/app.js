@@ -38,6 +38,7 @@ function calc(raw){
   let mfnPct = 0, mfnText = 'Free', mfnSpecific = false;
   if(base){ const p = parseMFN(base[0]); mfnPct = p.pct||0; mfnText = p.text; mfnSpecific = p.specific; r.desc = base[1]; }
   else { r.desc = ''; r.notes.push('提示：该8位子目未在现行HTS基础表中找到（可能已改号或为10位统计号），请核对。'); }
+  r.descCn = (typeof CNAMES!=='undefined' && CNAMES[n.c8]) || '';
   r.rows.push({layer:'最惠国税率（MFN）', rate:mfnText, add:mfnPct, addText:mfnPct+'%', basis:'HTS第1—97章General栏', zero:mfnPct===0});
   if(mfnSpecific) r.notes.push('该税号最惠国税率为从量/复合税（'+mfnText+'），从价合计未包含从量部分，需按进口数量另计。');
   // 2. 301
@@ -116,7 +117,8 @@ function renderCalc(r){
   box.style.display='block';
   if(r.status==='invalid'){ box.innerHTML='<div class="banner maybe">无法识别税号格式，请输入8位或10位HTS税号。</div>'; return; }
   let h = '<div class="banner '+(r.total>0?'hit':'none')+'">'+esc(r.c8)+(r.c10?('（'+esc(r.c10)+'）'):'')+'　加征关税总叠加值：+'+r.total+'%＝最惠国'+(r.rows[0].add)+'%＋各项加征'+(r.total-r.rows[0].add).toFixed(2).replace(/\.00$/,'')+'%</div>';
-  if(r.desc) h += '<div class="note" style="margin-bottom:10px">品名（现行HTS）：'+esc(r.desc)+'</div>';
+  if(r.descCn) h += '<div class="note" style="margin-bottom:10px">品名（中文参考）：'+esc(r.descCn)+(r.desc?('<br><span style="color:#8a94a0;font-size:11.5px">品名（现行HTS英文）：'+esc(r.desc)+'</span>'):'')+'</div>';
+  else if(r.desc) h += '<div class="note" style="margin-bottom:10px">品名（现行HTS）：'+esc(r.desc)+'</div>';
   h += '<table class="stack"><tr><th style="width:26%">措施层级</th><th style="width:10%">税率</th><th style="width:16%">加征值（从价）</th><th>加征依据</th></tr>';
   for(const row of r.rows){
     h += '<tr'+(row.zero?' class="zero"':'')+'><td>'+esc(row.layer)+'</td><td>'+esc(row.rate)+'</td><td class="add'+(row.zero?' zero':'')+'">'+esc(row.addText)+'</td><td style="font-size:12px">'+esc(row.basis)+'</td></tr>';
@@ -150,20 +152,21 @@ function runBatch(){
   const tokens = raw.split(/[\s,;，、]+/).filter(x=>x.trim());
   const seen = new Set(); lastBatch = [];
   for(const t of tokens){ if(!seen.has(t)){ seen.add(t); lastBatch.push(calc(t)); } }
-  let h = '<table class="grid"><tr><th>输入</th><th>8位子目</th><th>总叠加值</th><th>构成（加征项）</th><th>品名</th></tr>';
+  let h = '<table class="grid"><tr><th>输入</th><th>8位子目</th><th>总叠加值</th><th>构成（加征项）</th><th>品名（中文参考）</th></tr>';
   for(const r of lastBatch){
     const [tot, comp] = r.status==='invalid'?['格式无法识别','']:verdictOf(r);
-    h += '<tr><td>'+esc(r.raw)+'</td><td>'+esc(r.c8||'—')+'</td><td class="add">'+tot+'</td><td style="font-size:11.5px">'+esc(comp)+'</td><td style="font-size:11.5px">'+esc((r.desc||'').slice(0,80))+'</td></tr>';
+    const cn = r.descCn || (r.desc||'').slice(0,80);
+    h += '<tr><td>'+esc(r.raw)+'</td><td>'+esc(r.c8||'—')+'</td><td class="add">'+tot+'</td><td style="font-size:11.5px">'+esc(comp)+'</td><td style="font-size:11.5px" title="'+esc(r.desc||'')+'">'+esc(cn)+'</td></tr>';
   }
   h += '</table><div class="hint">共 '+lastBatch.length+' 条。合计不含从量税与双反税。</div>';
   document.getElementById('batchResult').innerHTML = h;
 }
 function exportCSV(){
   if(!lastBatch.length){ alert('请先执行批量计算'); return; }
-  let csv = '﻿输入,8位子目,总叠加值,构成,品名\n';
+  let csv = '﻿输入,8位子目,总叠加值,构成,品名（中文参考）,品名（英文HTS）\n';
   for(const r of lastBatch){
     const [tot, comp] = r.status==='invalid'?['格式无法识别','']:verdictOf(r);
-    csv += [r.raw, r.c8||'', tot, comp, (r.desc||'').slice(0,100)].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')+'\n';
+    csv += [r.raw, r.c8||'', tot, comp, r.descCn||'', (r.desc||'').slice(0,100)].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')+'\n';
   }
   const blob = new Blob([csv],{type:'text/csv;charset=utf-8'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '输美关税叠加计算结果.csv'; a.click();
@@ -180,8 +183,8 @@ function browseData(){
   const q = (document.getElementById('fText').value||'').trim().toLowerCase();
   const ch = document.getElementById('fCh').value;
   const fm = document.getElementById('fMeas').value;
-  if(bTab===0) return BASE.filter(r=>(!ch||r[0].slice(0,2)===ch)&&(!q||r[0].includes(q)||(r[2]||'').toLowerCase().includes(q)));
-  if(bTab===1) return M301L.filter(r=>(!ch||r[0].slice(0,2)===ch)&&(!q||r[0].includes(q)||(r[2]||'').toLowerCase().includes(q)));
+  if(bTab===0) return BASE.filter(r=>(!ch||r[0].slice(0,2)===ch)&&(!q||r[0].includes(q)||(r[2]||'').toLowerCase().includes(q)||(typeof CNAMES!=='undefined'&&(CNAMES[r[0]]||'').includes(q))));
+  if(bTab===1) return M301L.filter(r=>(!ch||r[0].slice(0,2)===ch)&&(!q||r[0].includes(q)||(r[2]||'').toLowerCase().includes(q)||(typeof CNAMES!=='undefined'&&(CNAMES[r[0]]||'').includes(q))));
   if(bTab===2) return M232.filter(r=>(!ch||r[0].slice(0,2)===ch)&&(!fm||r[1]===fm)&&(!q||r[0].includes(q)||(r[1]||'').toLowerCase().includes(q)));
   if(bTab===3) return EX122.filter(c=>(!ch||c.slice(0,2)===ch)&&(!q||c.includes(q)));
   return M301X.filter(r=>!q||(r[4]||'').toLowerCase().includes(q)||(r[5]||'').toLowerCase().includes(q));
@@ -193,10 +196,10 @@ function renderBrowse(p){
   if(bPage>pages) bPage=pages;
   const slice = rows.slice((bPage-1)*PER, bPage*PER);
   let h = '<table class="grid">';
-  if(bTab===0){ h+='<tr><th>8位子目</th><th>最惠国税率</th><th>品名（英文）</th></tr>';
-    for(const r of slice) h+='<tr><td>'+r[0]+'</td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td></tr>'; }
-  else if(bTab===1){ h+='<tr><th>8位子目</th><th>所属清单</th><th>税率</th><th>9903税目</th><th>品名（英文）</th></tr>';
-    for(const r of slice){ const m=LISTS[r[1]]; h+='<tr><td>'+r[0]+'</td><td>'+m.name+'</td><td>'+m.rate+'</td><td>'+m.h9903+'</td><td>'+esc(r[2])+'</td></tr>'; } }
+  if(bTab===0){ h+='<tr><th>8位子目</th><th>最惠国税率</th><th>品名（中文参考）</th><th>品名（英文HTS）</th></tr>';
+    for(const r of slice) h+='<tr><td>'+r[0]+'</td><td>'+esc(r[1])+'</td><td>'+esc((typeof CNAMES!=='undefined'&&CNAMES[r[0]])||'')+'</td><td>'+esc(r[2])+'</td></tr>'; }
+  else if(bTab===1){ h+='<tr><th>8位子目</th><th>所属清单</th><th>税率</th><th>9903税目</th><th>品名（中文参考）</th><th>品名（英文HTS）</th></tr>';
+    for(const r of slice){ const m=LISTS[r[1]]; h+='<tr><td>'+r[0]+'</td><td>'+m.name+'</td><td>'+m.rate+'</td><td>'+m.h9903+'</td><td>'+esc((typeof CNAMES!=='undefined'&&CNAMES[r[0]])||'')+'</td><td>'+esc(r[2])+'</td></tr>'; } }
   else if(bTab===2){ h+='<tr><th>8位子目</th><th>232措施</th><th>税率</th><th>9903税目</th><th>备注</th></tr>';
     for(const r of slice) h+='<tr><td>'+r[0]+'</td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td><td>'+esc(r[4])+'</td><td style="font-size:11px">'+esc(r[6]||'')+'</td></tr>'; }
   else if(bTab===3){ h+='<tr><th>8位子目</th><th>说明</th></tr>';

@@ -103,7 +103,7 @@
       <button id="tab5" onclick="switchTab(4)">301排除（178）</button>
     </div>
     <div class="filters">
-      <input id="fText" placeholder="搜索税号或品名关键词…" oninput="renderBrowse(1)">
+      <input id="fText" placeholder="搜索税号或品名关键词（支持中文）…" oninput="renderBrowse(1)">
       <select id="fCh" onchange="renderBrowse(1)"><option value="">全部章</option></select>
       <select id="fMeas" onchange="renderBrowse(1)" style="display:none"><option value="">全部232措施</option></select>
     </div>
@@ -137,7 +137,7 @@
   <!-- 下载 -->
   <div class="card">
     <h2>数据下载</h2>
-    <p style="font-size:13.5px;margin-bottom:10px">SQLite数据库（us_china_tariffs.db，3.6MB）含8张表：hts_base（11,414）、m301_list（10,008）、m301_strategic（392）、m301_exclusions（178）、m232_items（1,061）、s122_exceptions（1,097）、meta、sources。</p>
+    <p style="font-size:13.5px;margin-bottom:10px">SQLite数据库（us_china_tariffs.db，约4MB）含9张表：hts_base（11,414）、m301_list（10,008）、m301_strategic（392）、m301_exclusions（178）、m232_items（1,061）、s122_exceptions（1,097）、cn_names（11,414条中文参考品名）、meta、sources。</p>
     <div class="dl">
       <a href="us_china_tariffs.db" download>下载SQLite数据库</a>
       <a href="assets/data.js" download>下载JSON数据源</a>
