@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>中国输美产品关税叠加计算查询系统</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>中国输美产品关税叠加计算查询系统</h1>
+    <div class="sub">输入美国HTS税号，自动计算最惠国税率＋301＋232＋Section 122等各项加征及总叠加值 · 数据基准日 2026-07-18</div>
+    <div class="badges">
+      <span>全部8位税号 11,414</span>
+      <span>301清单 10,008＋战略产业 392</span>
+      <span>232措施 1,061</span>
+      <span>122例外 1,097</span>
+      <span>301排除 178</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap" style="margin-top:16px">
+
+  <div class="timeline">
+    <div class="tl-card"><b>Section 122 法定到期</b><span class="d">2026-07-24</span><p>+10%普遍附加税150天届满；CIT判违法被中止，上诉期间照收；接替方案（新301调查10-12.5%）推进中</p></div>
+    <div class="tl-card"><b>232药品生效</b><span class="d">2026-07-31</span><p>专利药及原料药100%（大企业7月31日、其他9月29日）</p></div>
+    <div class="tl-card"><b>301排除届满</b><span class="d">2026-11-09</span><p>178项排除（含14项光伏设备）到期；海事301（底盘车/起重机100%）次日生效</p></div>
+    <div class="tl-card"><b>半导体301再提高</b><span class="d">2027-06-23</span><p>9903.91.05项下税率将再提高（幅度另行公告）；232机电设备15%安排2027年底止</p></div>
+  </div>
+
+  <!-- 单码计算器 -->
+  <div class="card">
+    <h2>关税叠加计算器</h2>
+    <div class="q-row">
+      <input id="qInput" placeholder="输入美国HTS税号（8位或10位）：如 8541.43.00 / 72083900 / 8703.80.00" autofocus>
+      <button class="btn" onclick="runCalc()">计算叠加关税</button>
+    </div>
+    <div class="examples">示例：
+      <a onclick="demo('8541.43.00')">8541.43.00 光伏组件</a>
+      <a onclick="demo('8542.31.00')">8542.31.00 芯片</a>
+      <a onclick="demo('8703.80.00')">8703.80.00 电动车</a>
+      <a onclick="demo('7208.39.00')">7208.39.00 热轧钢卷</a>
+      <a onclick="demo('9401.61.40')">9401.61.40 软包木家具</a>
+      <a onclick="demo('8486.10.00')">8486.10.00 单晶炉</a>
+      <a onclick="demo('8507.60.00')">8507.60.00 锂电池</a>
+      <a onclick="demo('0201.10.10')">0201.10.10 牛肉</a>
+    </div>
+    <div class="hint">计算口径：最惠国税率（MFN）＋301关税＋232关税＋Section 122普遍附加税，逐项列示税率、加征值与法律依据，并自动适用“122与232不叠加”等规则；IEEPA（已终止）、201保障措施（已到期）单列说明；反倾销/反补贴税按企业与产品范围个案判定，不计入自动合计。</div>
+    <div class="result" id="qResult"></div>
+  </div>
+
+  <!-- 数据更新中心 -->
+  <div class="card" id="updateCard">
+    <h2>数据更新中心</h2>
+    <p class="upd-meta">数据基准：<b>2026-07-18（HTS 2026HTSRev11）</b>｜上次自动检查：<b id="lastCheck">从未</b></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn" id="btnCheck" onclick="runAutoCheck()">检查官方最新动态</button>
+      <button class="btn ghost" onclick="downloadUpdReport()">下载更新检查报告</button>
+    </div>
+    <div class="hint">一键自动检查：① 联邦公报API（浏览器直连官方接口）逐项核查232/301/122/IEEPA/201/UFLPA是否有基准日后新发布的总统公告与官方通知；② 尝试连接hts.usitc.gov核对HTS修订版号。</div>
+    <div class="uconsole" id="updConsole"></div>
+    <div id="updSummary"></div>
+
+    <h3 style="margin:18px 0 6px">官方数据文件导入比对<span class="dim" style="font-weight:400;font-size:12.5px">（USITC限制浏览器跨域直连，点此下载官方文件后拖入即可本地比对更新）</span></h3>
+    <table class="utab">
+      <thead><tr><th>官方文件（点击即下载）</th><th>大小</th><th>导入后比对内容</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://hts.usitc.gov/reststop/exportList?from=9901&amp;to=9922&amp;format=JSON&amp;styles=false" target="_blank" rel="noopener">① 第99章税目JSON（hts.usitc.gov）</a></td><td>约2MB</td><td>438个9903申报税目：232/301/122等措施的<b>新增、废止、税率变化</b></td></tr>
+        <tr><td><a href="https://hts.usitc.gov/reststop/getChapterNotes?doc=99" target="_blank" rel="noopener">② 第99章注释全文（hts.usitc.gov）</a></td><td>约4MB</td><td>注释2/16/20/31/33/37/38/39指纹：<b>清单覆盖范围</b>是否调整</td></tr>
+        <tr><td><a href="https://hts.usitc.gov/reststop/exportList?from=01&amp;to=97&amp;format=JSON&amp;styles=false" target="_blank" rel="noopener">③ MFN全表JSON（hts.usitc.gov）</a></td><td>约11MB</td><td>11,414个8位税号最惠国税率差异，<b>可直接应用到本系统</b>并下载更新后的数据文件</td></tr>
+      </tbody>
+    </table>
+    <div class="dropzone" id="dropzone">
+      <b>将下载好的官方文件拖到此处</b>，或
+      <label class="btn ghost" style="cursor:pointer">选择文件<input type="file" style="display:none" onchange="onUpdPick(this)"></label>
+      <div class="dim" style="margin-top:4px">支持上述①②③三类文件，自动识别类型；文件仅在本机浏览器内解析，不上传任何服务器</div>
+    </div>
+    <div class="uconsole" id="impConsole"></div>
+    <div id="impResult"></div>
+  </div>
+
+  <!-- 批量 -->
+  <div class="card">
+    <h2>批量计算</h2>
+    <textarea id="batchInput" placeholder="每行一个税号，例如：&#10;8541.43.00&#10;8703.80.00&#10;7208.39.00"></textarea>
+    <div style="margin-top:10px;display:flex;gap:10px">
+      <button class="btn" onclick="runBatch()">批量计算</button>
+      <button class="btn ghost" onclick="exportCSV()">导出CSV</button>
+    </div>
+    <div id="batchResult"></div>
+  </div>
+
+  <!-- 数据浏览 -->
+  <div class="card">
+    <h2>数据库浏览</h2>
+    <div class="tabs">
+      <button id="tab1" class="on" onclick="switchTab(0)">MFN全表（11,414）</button>
+      <button id="tab2" onclick="switchTab(1)">301清单（10,008）</button>
+      <button id="tab3" onclick="switchTab(2)">232措施（1,061）</button>
+      <button id="tab4" onclick="switchTab(3)">122例外（1,097）</button>
+      <button id="tab5" onclick="switchTab(4)">301排除（178）</button>
+    </div>
+    <div class="filters">
+      <input id="fText" placeholder="搜索税号或品名关键词…" oninput="renderBrowse(1)">
+      <select id="fCh" onchange="renderBrowse(1)"><option value="">全部章</option></select>
+      <select id="fMeas" onchange="renderBrowse(1)" style="display:none"><option value="">全部232措施</option></select>
+    </div>
+    <div id="browseBox"></div>
+    <div class="pager">
+      <button onclick="pageMove(-1)">上一页</button>
+      <span id="pgInfo"></span>
+      <button onclick="pageMove(1)">下一页</button>
+    </div>
+  </div>
+
+  <!-- 统计 -->
+  <div class="card">
+    <h2>措施覆盖统计</h2>
+    <div id="stat1"></div>
+  </div>
+
+  <!-- 方法 -->
+  <div class="card">
+    <h2>计算规则与法律依据</h2>
+    <ol class="sop">
+      <li><b>第1层 最惠国税率（MFN）</b>——所有进口适用，HTS第1—97章“General”栏；从量税（如¢/kg）需按数量另计。<div class="src">数据源：hts.usitc.gov（本库hts_base表）</div></li>
+      <li><b>第2层 301关税</b>——清单1/2/3：25%；清单4A：7.5%；战略产业加税25%/50%/100%（电动车100%、光伏电池与半导体50%等）。178项排除可申请免征（2026-11-09到期）。<div class="src">依据：83 FR 28710等；89 FR 76581；89 FR 101682。数据源：HTS注释20/31（本库m301_*表）</div></li>
+      <li><b>第3层 232关税</b>——钢/铝/铜及制品50%、金属衍生品25%、工业与电气设备15%封顶（2027年底止）；汽车及零部件25%；中重型卡车25%/客车10%；软木10%；软包木家具与橱柜25%；先进计算芯片25%。金属类措施互不叠加。<div class="src">依据：Proclamation 10895/10896/10908/10962；FR 2025-19482/2025-19639/2026-01052/2026-06960/2026-11314。数据源：HTS注释16/33/37/38/39（本库m232_items表）</div></li>
+      <li><b>第4层 Section 122普遍附加税 +10%</b>——普遍适用，<b>但与232措施不叠加</b>（232覆盖产品豁免）；1,097个税号产品例外（食品、药品、能源、部分机电等）；民用航空器豁免。2026-07-24法定到期，司法争议中（CIT判违法、CAFC中止、上诉照收）。<div class="src">依据：Proclamation 11012（FR 2026-03824）；HTS注释2(aa)（本库s122_exceptions表）</div></li>
+      <li><b>已失效措施</b>——IEEPA（芬太尼10%＋对等10%）：SCOTUS 2026-02-20裁决违法，2026-02-24停征，已缴税款可经CAPE门户申请退还；201保障措施（光伏、洗衣机）：2026年2月届满。<div class="src">依据：SCOTUS Learning Resources v. Trump；CBP CSMS指引；HTS编译注释</div></li>
+      <li><b>案外措施</b>——反倾销/反补贴税按“企业＋产品范围”个案判定（access.trade.gov）；UFLPA强迫劳动扣留按供应链证据判定。二者不纳入自动合计。<div class="src">数据源：商务部ADCVD案件清单；CBP UFLPA统计</div></li>
+    </ol>
+  </div>
+
+  <!-- 下载 -->
+  <div class="card">
+    <h2>数据下载</h2>
+    <p style="font-size:13.5px;margin-bottom:10px">SQLite数据库（us_china_tariffs.db，3.6MB）含8张表：hts_base（11,414）、m301_list（10,008）、m301_strategic（392）、m301_exclusions（178）、m232_items（1,061）、s122_exceptions（1,097）、meta、sources。</p>
+    <div class="dl">
+      <a href="us_china_tariffs.db" download>下载SQLite数据库</a>
+      <a href="assets/data.js" download>下载JSON数据源</a>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    数据源：HTSUS第1—97章及第99章第三分章注释2/16/20/31/33/37/38/39（hts.usitc.gov，2026-07-18解析）；USTR联邦公报公告；总统公告10895/10896/10908/10962/11012及FR 2025-19482、2025-19639、2026-01052、2026-03824、2026-06960、2026-11314；CBP CSMS指引。<br>
+    本系统计算结果供贸易合规参考，不构成法律意见；报关前请以hts.usitc.gov及CBP最新指引最终确认。301按“中国原产”认定，与起运地无关；232/122按进口产品本身适用。
+  </div>
+</footer>
+
+<script src="assets/data.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/update.js"></script>
+</body>
+</html>
