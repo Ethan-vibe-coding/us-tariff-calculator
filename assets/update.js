@@ -58,7 +58,8 @@ const FR_QUERIES = [
   {key:'s122',  name:'Section 122附加税',  term:'Section 122 balance-of-payments'},
   {key:'ieepa', name:'IEEPA关税（退税）',  term:'IEEPA tariff'},
   {key:'s201',  name:'201保障措施',        term:'Section 201 safeguard'},
-  {key:'uflpa', name:'UFLPA强迫劳动',      term:'UFLPA forced labor'}
+  {key:'uflpa', name:'UFLPA强迫劳动',      term:'UFLPA forced labor'},
+  {key:'s301fl', name:'301强迫劳动（FLIP）', term:'forced labor Section 301'}
 ];
 async function checkFR(){
   const base = META.base_date;

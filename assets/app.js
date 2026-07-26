@@ -3,6 +3,7 @@ const BASE_MAP = new Map(); BASE.forEach(r=>BASE_MAP.set(r[0],[r[1],r[2]]));
 const M301L_MAP = new Map(); M301L.forEach(r=>M301L_MAP.set(r[0],[r[1],r[2]]));
 const M232_MAP = new Map(); M232.forEach(r=>{if(!M232_MAP.has(r[0]))M232_MAP.set(r[0],[]);M232_MAP.get(r[0]).push(r);});
 const EX122_SET = new Set(EX122);
+const EX301FL_SET = new Set(EX301FL);
 const CHNAME = {'84':'机器机械','85':'电机电气','86':'铁路装备','87':'车辆','88':'航空器','89':'船舶','90':'仪器仪表','72':'钢铁','73':'钢铁制品','76':'铝及其制品','74':'铜及其制品','29':'有机化学品','30':'药品','94':'家具寝具','44':'木及木制品','39':'塑料制品','62':'梭织服装','61':'针织服装'};
 
 /* ---------- 税号标准化 ---------- */
@@ -89,15 +90,15 @@ function calc(raw){
     if(add>0) has232 = true; else has232 = has232 || true; // 覆盖即豁免122
   }
   if(m232items.length) has232 = true;
-  // 4. Section 122
+  // 4. Section 122（2026-07-24法定到期，停止征收）
+  r.rows.push({layer:'Section 122普遍附加税', rate:'已到期', add:0, addText:'0', basis:'150天法定上限于2026-07-24届满，国会未授权延期，已停止征收（9903.03.01失效）', zero:true});
+  // 4b. 301强迫劳动（FLIP，2026-07-24生效，中国+12.5%）
   if(m232items.length){
-    r.rows.push({layer:'Section 122普遍附加税', rate:'10%', add:0, addText:'0（豁免）', basis:'9903.03.06：232覆盖产品不与122叠加（注释2(aa)(v)）', zero:true});
-  } else if(EX122_SET.has(n.c8)){
-    r.rows.push({layer:'Section 122普遍附加税', rate:'10%', add:0, addText:'0（例外）', basis:'9903.03.03/9903.03.04：产品例外清单（注释2(aa)(ii)/(iii)）', zero:true});
-  } else if(n.c8.startsWith('88')){
-    r.rows.push({layer:'Section 122普遍附加税', rate:'10%', add:0, addText:'0（豁免）', basis:'9903.03.05：民用航空器及其发动机部件例外（描述判定）', zero:true});
+    r.rows.push({layer:'301强迫劳动关税（FLIP）', rate:'12.5%', add:0, addText:'0（豁免）', basis:'9903.05.90：232行业（金属/汽车/零部件/木材/重卡/半导体）覆盖产品不叠加（注释52(f)）', zero:true});
+  } else if(EX301FL_SET.has(n.c8)){
+    r.rows.push({layer:'301强迫劳动关税（FLIP）', rate:'12.5%', add:0, addText:'0（豁免）', basis:'9903.05.86/.87/.88/.89：产品豁免清单（注释52(b)-(e)，含民用航空器、药品等）', zero:true});
   } else {
-    r.rows.push({layer:'Section 122普遍附加税', rate:'10%', add:10, addText:'+10%', basis:'9903.03.01｜Proclamation 11012（FR 2026-03824）｜2026-02-24生效，2026-07-24法定到期；CIT判违法被CAFC中止，上诉期间照收', zero:false});
+    r.rows.push({layer:'301强迫劳动关税（FLIP）', rate:'12.5%', add:12.5, addText:'+12.5%', basis:'9903.05.31｜USTR FR公告2026-07-23（301强迫劳动调查最终行动）｜2026-07-24生效；与普通税率及其他99章关税、双反叠加（注释52(a)）；在途豁免9903.05.85限7/28前申报', zero:false});
   }
   // 5. IEEPA（已终止）
   r.rows.push({layer:'IEEPA（芬太尼10%＋对等10%）', rate:'已终止', add:0, addText:'0', basis:'SCOTUS 2026-02-20裁决（Learning Resources v. Trump）；CBP 2026-02-24停征；已缴税款可经CAPE门户申请退还', zero:true});
@@ -112,7 +113,7 @@ function calc(raw){
   let total = 0; const parts = [];
   for(const row of r.rows){ if(row.add){ total += row.add; parts.push(row.addText.replace(/（.*$/,'').replace('+','')); } }
   r.total = total; r.has232 = has232;
-  r.notes.push('总叠加值＝各行从价税率之和（简单相加）；从量税、双反税、UFLPA扣留不计入。122将于2026-07-24法定到期，若未延期/接替，总税负相应下降10个百分点。');
+  r.notes.push('总叠加值＝各行从价税率之和（简单相加）；从量税、双反税、UFLPA扣留不计入。Section 122已于2026-07-24法定到期停征；301强迫劳动关税（中国+12.5%）自2026-07-24起生效，232覆盖产品及豁免清单内产品不叠加。');
   return r;
 }
 
@@ -187,7 +188,7 @@ function exportCSV(){
 /* ---------- 浏览 ---------- */
 let bTab=0, bPage=1; const PER=50;
 function switchTab(i){ bTab=i; bPage=1;
-  for(let k=1;k<=5;k++) document.getElementById('tab'+k).className=(k-1===i?'on':'');
+  for(let k=1;k<=6;k++){ const idx=(k<=5?k-1:5); document.getElementById('tab'+k).className=(idx===i?'on':''); }
   document.getElementById('fMeas').style.display = (i===2?'':'none');
   renderBrowse(1);
 }
@@ -199,6 +200,7 @@ function browseData(){
   if(bTab===1) return M301L.filter(r=>(!ch||r[0].slice(0,2)===ch)&&(!q||r[0].includes(q)||(r[2]||'').toLowerCase().includes(q)||(typeof CNAMES!=='undefined'&&(CNAMES[r[0]]||'').includes(q))));
   if(bTab===2) return M232.filter(r=>(!ch||r[0].slice(0,2)===ch)&&(!fm||r[1]===fm)&&(!q||r[0].includes(q)||(r[1]||'').toLowerCase().includes(q)));
   if(bTab===3) return EX122.filter(c=>(!ch||c.slice(0,2)===ch)&&(!q||c.includes(q)));
+  if(bTab===5) return EX301FL.filter(c=>(!ch||c.slice(0,2)===ch)&&(!q||c.includes(q)||(typeof CNAMES!=='undefined'&&(CNAMES[c]||'').includes(q))));
   return M301X.filter(r=>!q||(r[4]||'').toLowerCase().includes(q)||(r[5]||'').toLowerCase().includes(q));
 }
 function renderBrowse(p){
@@ -216,6 +218,8 @@ function renderBrowse(p){
     for(const r of slice) h+='<tr><td>'+r[0]+'</td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td><td>'+esc(r[4])+'</td><td style="font-size:11px">'+esc(r[6]||'')+'</td></tr>'; }
   else if(bTab===3){ h+='<tr><th>8位子目</th><th>说明</th></tr>';
     for(const c of slice){ const b=BASE_MAP.get(c); h+='<tr><td>'+c+'</td><td style="font-size:11.5px">'+esc(b?b[1].slice(0,120):'')+'</td></tr>'; } }
+  else if(bTab===5){ h+='<tr><th>8位子目</th><th>品名（中文参考）</th><th>品名（英文HTS）</th></tr>';
+    for(const c of slice){ const b=BASE_MAP.get(c); h+='<tr><td>'+c+'</td><td>'+esc((typeof CNAMES!=='undefined'&&CNAMES[c])||'')+'</td><td style="font-size:11.5px">'+esc(b?b[2].slice(0,100):'')+'</td></tr>'; } }
   else{ h+='<tr><th>排除类别</th><th>序号</th><th>产品描述（英文，为裁定依据）</th><th>涉及统计号</th></tr>';
     for(const r of slice) h+='<tr><td>'+esc(r[0])+'</td><td>'+r[3]+'</td><td>'+esc(r[4])+'</td><td>'+esc(r[5])+'</td></tr>'; }
   h += '</table>';
@@ -236,7 +240,8 @@ function renderStats(){
     ['232金属衍生品25%', M232.filter(r=>r[1].indexOf('衍生品')>=0&&r[2]==='25%').length],
     ['232机电设备15%封顶', M232.filter(r=>r[1].indexOf('15%封顶')>=0).length],
     ['232汽车/卡车/木材/家具/半导体', M232.filter(r=>r[1].indexOf('金属')<0).length],
-    ['Section 122产品例外', EX122.length],
+    ['Section 122产品例外（已到期）', EX122.length],
+    ['301强迫劳动豁免清单', EX301FL.length],
     ['301排除', M301X.length],
   ];
   const max = Math.max(...items.map(x=>x[1]));
