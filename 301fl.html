@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>301强迫劳动关税专项查询（FLIP）· 中国输美产品关税叠加计算查询系统</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+.fl-hero{background:linear-gradient(135deg,#7b1f1f,#a83232);color:#fff;border-radius:10px;padding:20px 24px;margin-bottom:16px}
+.fl-hero h2{margin:0 0 6px;font-size:20px}
+.fl-hero p{margin:4px 0;font-size:13.5px;opacity:.95}
+.fl-hero .tags{margin-top:10px}
+.fl-hero .tags span{display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:3px 12px;font-size:12.5px;margin:0 6px 6px 0}
+.verdict{border-radius:10px;padding:16px 20px;margin:14px 0;font-size:15px}
+.verdict.hit{background:#fdf0f0;border:1.5px solid #c0392b;color:#8e2323}
+.verdict.free{background:#eef8f0;border:1.5px solid #27ae60;color:#1c6b3c}
+.verdict.warn{background:#fef9ec;border:1.5px solid #d4a017;color:#7a5b06}
+.verdict b{font-size:18px}
+.annex-pill{display:inline-block;border-radius:4px;padding:1px 8px;font-size:12px;font-weight:bold;margin-right:4px}
+.ap-b{background:#e3ecfa;color:#1f4e96}.ap-c{background:#f3e8fa;color:#6b2d91}
+.ap-d{background:#e0f5f1;color:#0f6e5d}.ap-e{background:#fdeee0;color:#a85b0b}
+.qbtn{background:#7b1f1f;color:#fff;border:none;border-radius:6px;padding:10px 26px;font-size:15px;cursor:pointer}
+.qbtn:hover{background:#962626}
+.filter-btn{border:1px solid #bbb;background:#fff;border-radius:16px;padding:4px 14px;font-size:12.5px;cursor:pointer;margin-right:6px}
+.filter-btn.on{background:#7b1f1f;color:#fff;border-color:#7b1f1f}
+.src-note{font-size:12px;color:#777;margin-top:8px}
+a.back{color:var(--navy);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>301强迫劳动关税专项查询</h1>
+    <div class="sub">Forced Labor Section 301 Investigations（FLIP）最终行动 · 9903.05.31 中国 +12.5% · 2026-07-24生效 · <a href="index.html" style="color:#cfe0ff">← 返回关税叠加计算器</a></div>
+  </div>
+</header>
+
+<div class="wrap" style="margin-top:16px">
+
+  <div class="fl-hero">
+    <h2>措施要点（USTR 2026-07-23联邦公报公告）</h2>
+    <p>对60个经济体输美产品加征从价税；<b>中国产品按9903.05.31加征12.5%</b>，与普通税率（MFN）、301/232等第99章关税及双反税叠加（注释52(a)）。</p>
+    <p>豁免税目9903.05.85–.92：在途货物、四张产品豁免清单（共2,113个8位税号）、232行业产品不叠加、人道捐赠、信息材料。</p>
+    <div class="tags">
+      <span>生效：2026-07-24 0:01 ET</span><span>中国：+12.5%</span><span>豁免清单：2,113码</span><span>232行业不叠加</span><span>在途豁免：7/28截止</span>
+    </div>
+  </div>
+
+  <!-- 查询 -->
+  <div class="card">
+    <h2>税号查询</h2>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <input id="flInput" placeholder="输入8位税号，如 8541.43.00 / 0901.11.00 / 9401.61.40" style="flex:1;min-width:280px;padding:10px 12px;font-size:15px;border:1px solid #bbb;border-radius:6px">
+      <button class="qbtn" onclick="flQuery()">查询</button>
+    </div>
+    <div class="hint" style="margin-top:8px">判定逻辑：①232行业覆盖 → 豁免（9903.05.90，不叠加）；②命中2,113项豁免清单 → 豁免（9903.05.86/.87/.88/.89）；③其余中国原产产品 → <b>+12.5%（9903.05.31）</b>。示例：
+      <a href="javascript:void(0)" onclick="flDemo('8541.43.00')">8541.43.00（光伏组件，加征）</a> ·
+      <a href="javascript:void(0)" onclick="flDemo('0901.11.00')">0901.11.00（咖啡，清单豁免）</a> ·
+      <a href="javascript:void(0)" onclick="flDemo('8703.80.00')">8703.80.00（电动车，232豁免）</a> ·
+      <a href="javascript:void(0)" onclick="flDemo('3004.90.10')">3004.90.10（药品，清单豁免）</a>
+    </div>
+    <div id="flResult"></div>
+  </div>
+
+  <!-- 豁免清单浏览 -->
+  <div class="card">
+    <h2>豁免清单浏览（2,113个8位税号）</h2>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <input id="flSearch" placeholder="搜索税号或品名（支持中文）…" style="flex:1;min-width:240px;padding:8px 12px;border:1px solid #bbb;border-radius:6px" oninput="flPage=1;flRender()">
+      <div>
+        <button class="filter-btn on" data-a="" onclick="flFilter(this,'')">全部</button>
+        <button class="filter-btn" data-a="b" onclick="flFilter(this,'b')">(b) 产品清单 856</button>
+        <button class="filter-btn" data-a="c" onclick="flFilter(this,'c')">(c) 特定产品 16</button>
+        <button class="filter-btn" data-a="d" onclick="flFilter(this,'d')">(d) 民用航空器 541</button>
+        <button class="filter-btn" data-a="e" onclick="flFilter(this,'e')">(e) 药用产品 700</button>
+      </div>
+    </div>
+    <div id="flList"></div>
+    <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+      <span id="flPg" style="font-size:13px;color:#555"></span>
+      <div>
+        <button class="filter-btn" onclick="flMove(-1)">上一页</button>
+        <button class="filter-btn" onclick="flMove(1)">下一页</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 豁免结构 -->
+  <div class="card">
+    <h2>豁免结构（9903.05.85–.92）与原文依据</h2>
+    <table class="stack">
+      <tr><th style="width:13%">豁免税目</th><th style="width:8%">条款</th><th style="width:34%">内容</th><th>原文（英文，节选）</th></tr>
+      <tr><td><b>9903.05.85</b></td><td>—</td><td>在途货物：2026-07-24前装船在途、2026-07-28前申报进口</td><td class="src-note">"Articles that (1) were loaded onto a vessel at the port of loading and in transit … before 12:01 a.m. eastern time on July 24, 2026; and (2) are entered for consumption … before 12:01 a.m. eastern time on July 28, 2026."</td></tr>
+      <tr><td><b>9903.05.86</b></td><td>(b)</td><td>产品清单豁免（食品、农产品、部分工业品等856个8位税号）</td><td class="src-note">"…the duties imposed by headings 9903.05.20–9903.05.84 shall not apply to articles that are classifiable in the following provisions of the HTSUS:"</td></tr>
+      <tr><td><b>9903.05.87</b></td><td>(c)</td><td>特定产品豁免（Etrogs、特定热带水果、芝麻、精油、胶合板等16个税号，按描述判定）</td><td class="src-note">"…shall not apply to the following particular articles: (1) Etrogs (classifiable in subheading 0805.90.01); (2) Tropical fruit, nesoi, frozen …"</td></tr>
+      <tr><td><b>9903.05.88</b></td><td>(d)</td><td>民用航空器及其发动机、零部件（541个8位税号）</td><td class="src-note">"…shall not apply to articles that are civil aircraft (all aircraft other than military aircraft); their engines, parts and components …"</td></tr>
+      <tr><td><b>9903.05.89</b></td><td>(e)</td><td>药用产品（用于药品应用，700个8位税号）</td><td class="src-note">"…shall not apply to articles that are for use in pharmaceutical applications and that are classifiable in the following provisions of the HTSUS …"</td></tr>
+      <tr><td><b>9903.05.90</b></td><td>(f)</td><td>232行业不叠加：钢/铝/铜及衍生品、乘用车/轻卡、汽车零部件、木材及木制品、中重型卡车/客车、重卡零部件、半导体</td><td class="src-note">"…shall not apply to: (1) articles of aluminum, of steel or of copper … (2) passenger vehicles … and light trucks … (7) semiconductors …"</td></tr>
+      <tr><td><b>9903.05.91</b></td><td>—</td><td>人道主义捐赠物资（食品、衣物、药品等）</td><td class="src-note">"Articles that are donations by persons subject to the jurisdiction of the United States … intended to be used to relieve human suffering"</td></tr>
+      <tr><td><b>9903.05.92</b></td><td>—</td><td>信息材料（出版物、影片、唱片、照片、光盘、艺术品、新闻电讯等）</td><td class="src-note">"Articles that are informational materials, including but not limited to publications, films, posters, phonograph records … artworks and news wire feeds"</td></tr>
+    </table>
+    <div class="src-note">来源：USTR联邦公报公告预发布稿《Section 301 Forced Labor Investigations: Final Action》（2026-07-23，431页，ustr.gov）；注释52及第90–102页税目表。本页结果供贸易合规参考，不构成法律意见；报关前请以hts.usitc.gov及CBP最新指引确认。</div>
+  </div>
+</div>
+
+<script src="assets/data.js"></script>
+<script>
+const FL_SET = new Set(EX301FL);
+const BMAP = new Map(BASE.map(r=>[r[0],r]));
+const M232M = new Map();
+for(const r of M232){ if(!M232M.has(r[0])) M232M.set(r[0],[]); M232M.get(r[0]).push(r); }
+// 附件归属（与数据库s301fl_exemptions一致）
+const ANNEX = (()=>{ const m={}; if(typeof EX301FL_A!=='undefined') return EX301FL_A; return m; })();
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function annexPills(code){
+  const a = ANNEX[code]; if(!a) return '';
+  return a.split('').map(x=>'<span class="annex-pill ap-'+x+'">('+x+')</span>').join('');
+}
+function flDemo(c){ document.getElementById('flInput').value=c; flQuery(); }
+function flQuery(){
+  let raw = document.getElementById('flInput').value.trim();
+  let digits = raw.replace(/\D/g,'');
+  const box = document.getElementById('flResult');
+  if(digits.length<8){ box.innerHTML='<div class="verdict warn">请输入完整8位税号（可带点，如 8541.43.00）。</div>'; return; }
+  const code = digits.slice(0,4)+'.'+digits.slice(4,6)+'.'+digits.slice(6,8);
+  const b = BMAP.get(code);
+  const cn = (typeof CNAMES!=='undefined'&&CNAMES[code])||'';
+  const nameHtml = b ? '<div style="margin-top:8px;font-size:13.5px">品名（中文参考）：<b>'+esc(cn||'—')+'</b><br>品名（英文HTS）：'+esc(b[2])+'<br>最惠国税率（MFN）：'+esc(b[1])+'</div>'
+                     : '<div style="margin-top:8px;font-size:13.5px;color:#888">该8位子目未在现行HTS基础表中找到（可能不存在或已拆分），以下判定仅供方向性参考。</div>';
+  let v;
+  const m232 = M232M.get(code)||[];
+  if(m232.length){
+    const ms = m232.map(r=>esc(r[1])).join('；');
+    v = '<div class="verdict free"><b>豁免，不叠加</b> —— 该产品受232措施覆盖（'+ms+'），依9903.05.90（注释52(f)）不再叠加301强迫劳动关税。'+nameHtml+'</div>';
+  } else if(FL_SET.has(code)){
+    v = '<div class="verdict free"><b>豁免</b> —— '+code+' 在301强迫劳动产品豁免清单内（'+annexPills(code)+'9903.05.86/.87/.88/.89），不加征12.5%。'+nameHtml+'</div>';
+  } else {
+    v = '<div class="verdict hit"><b>加征 +12.5%</b> —— '+code+' 不在豁免范围，中国原产货物按 <b>9903.05.31</b> 在普通税率基础上加征12.5%（自2026-07-24起），并与301/232等其他99章关税叠加。'+nameHtml+'</div>';
+  }
+  box.innerHTML = v;
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('flInput').addEventListener('keydown',e=>{if(e.key==='Enter')flQuery();});
+  flRender();
+});
+
+/* ---- 清单浏览 ---- */
+let flPage=1, flAnnex='', PER_FL=50;
+function flFilter(btn,a){ flAnnex=a; flPage=1;
+  document.querySelectorAll('.filter-btn[data-a]').forEach(x=>x.className='filter-btn'+(x===btn?' on':''));
+  flRender(); }
+function flMove(d){ flPage+=d; flRender(); }
+function flRows(){
+  const q = document.getElementById('flSearch').value.trim().toLowerCase();
+  return EX301FL.filter(c=>{
+    if(flAnnex && !(ANNEX[c]||'').includes(flAnnex)) return false;
+    if(!q) return true;
+    const b=BMAP.get(c); const cn=(typeof CNAMES!=='undefined'&&CNAMES[c])||'';
+    return c.includes(q)||cn.includes(q)||(b&&(b[2]||'').toLowerCase().includes(q));
+  });
+}
+function flRender(){
+  const rows = flRows();
+  const pages = Math.max(1, Math.ceil(rows.length/PER_FL));
+  if(flPage>pages) flPage=pages; if(flPage<1) flPage=1;
+  const slice = rows.slice((flPage-1)*PER_FL, flPage*PER_FL);
+  let h = '<table class="grid"><tr><th>8位税号</th><th>清单</th><th>品名（中文参考）</th><th>品名（英文HTS）</th></tr>';
+  for(const c of slice){
+    const b=BMAP.get(c); const cn=(typeof CNAMES!=='undefined'&&CNAMES[c])||'';
+    h += '<tr><td><a href="javascript:void(0)" onclick="flDemo(\''+c+'\');window.scrollTo(0,0)">'+c+'</a></td><td>'+annexPills(c)+'</td><td>'+esc(cn)+'</td><td style="font-size:11.5px">'+esc(b?b[2]:'')+'</td></tr>';
+  }
+  h += '</table>';
+  document.getElementById('flList').innerHTML = h;
+  document.getElementById('flPg').textContent = '第 '+flPage+' / '+pages+' 页 · 共 '+rows.length.toLocaleString()+' 条';
+}
+</script>
+</body>
+</html>
