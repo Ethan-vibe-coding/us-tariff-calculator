@@ -10,11 +10,12 @@
 <header>
   <div class="wrap">
     <h1>中国输美产品关税叠加计算查询系统</h1>
-    <div class="sub">输入美国HTS税号，自动计算最惠国税率＋301＋301强迫劳动＋232等各项加征及总叠加值 · 数据基准日 2026-07-26</div>
+    <div class="sub">输入美国HTS税号，自动计算最惠国税率＋301＋301强迫劳动＋232等各项加征及总叠加值 · 数据基准日 2026-09-01（HTS 2026HTSRev17）</div>
     <div class="badges">
       <span>全部8位税号 11,414</span>
       <span>301清单 10,008＋战略产业 392</span>
-      <span>232措施 1,061</span>
+      <span>232措施 1,169（含药品/无人机/多晶硅）</span>
+      <span>201石英TRQ 2</span>
       <span>301强迫劳动豁免 2,113</span>
       <span>301排除 178</span>
     </div>
@@ -24,11 +25,13 @@
 <div class="wrap" style="margin-top:16px">
 
   <div class="timeline">
-    <div class="tl-card"><b>301强迫劳动生效</b><span class="d">2026-07-24</span><p>FLIP调查最终行动：中国9903.05.31加征12.5%；232行业及2,113项豁免清单不叠加；在途豁免7/28止 <a href="301fl.html" style="color:#c00;font-weight:bold">→ 专项查询页</a></p></div>
-    <div class="tl-card"><b>Section 122 已到期</b><span class="d">2026-07-24</span><p>+10%普遍附加税150天法定上限届满，国会未授权延期，已停止征收</p></div>
-    <div class="tl-card"><b>232药品生效</b><span class="d">2026-07-31</span><p>专利药及原料药100%（大企业7月31日、其他9月29日）</p></div>
+    <div class="tl-card"><b>301强迫劳动生效</b><span class="d">2026-07-24</span><p>FLIP调查最终行动：中国9903.05.31加征12.5%；232行业及2,113项豁免清单不叠加 <a href="301fl.html" style="color:#c00;font-weight:bold">→ 专项查询页</a></p></div>
+    <div class="tl-card"><b>232药品已生效</b><span class="d">2026-07-31</span><p>专利药及原料药100%（9903.04.60）：大企业7月31日、其他企业9月29日起；仿制药不加征</p></div>
+    <div class="tl-card"><b>201石英TRQ已生效</b><span class="d">2026-08-15</span><p>石英表面产品（人造石板材/台面）：配额内25%、超配额50%，逐年递减至2030年；中国不在豁免名单</p></div>
+    <div class="tl-card"><b>232无人机生效</b><span class="d">2026-09-03</span><p>＞25kg／带热成像／充电桩100%；≤25kg无热成像25%；其他部件2027-02-09起25%（Proclamation 11055）</p></div>
+    <div class="tl-card"><b>232多晶硅将生效</b><span class="d">2026-12-04</span><p>多晶硅及硅片/电池/组件：+15%从价＋MIP最低限价（$21/kg、$100/kg、$0.22/W、$0.38/W）</p></div>
     <div class="tl-card"><b>301排除届满</b><span class="d">2026-11-09</span><p>178项排除（含14项光伏设备）到期；海事301（底盘车/起重机100%）次日生效</p></div>
-    <div class="tl-card"><b>半导体301再提高</b><span class="d">2027-06-23</span><p>9903.91.05项下税率将再提高（幅度另行公告）；232机电设备15%安排2027年底止</p></div>
+    <div class="tl-card"><b>半导体301再提高</b><span class="d">2027-06-23</span><p>9903.91.05项下税率将再提高（幅度另行公告）</p></div>
   </div>
 
   <!-- 单码计算器 -->
@@ -48,14 +51,14 @@
       <a onclick="demo('8507.60.00')">8507.60.00 锂电池</a>
       <a onclick="demo('0201.10.10')">0201.10.10 牛肉</a>
     </div>
-    <div class="hint">计算口径：最惠国税率（MFN）＋301关税＋301强迫劳动关税（12.5%）＋232关税，逐项列示税率、加征值与法律依据，并自动适用“301FL与232不叠加”“豁免清单”等规则；Section 122（已到期停征）、IEEPA（已终止）、201保障措施（已到期）单列说明；反倾销/反补贴税按企业与产品范围个案判定，不计入自动合计。</div>
+    <div class="hint">计算口径：最惠国税率（MFN）＋301关税＋301强迫劳动关税（12.5%）＋232关税（含药品、无人机、多晶硅新措施），逐项列示税率、加征值与法律依据，并自动适用“301FL与232不叠加”“豁免清单”等规则；Section 122（已到期停征）、IEEPA（已终止）单列说明；232药品（专利药100%）、201石英TRQ、232多晶硅MIP从量税按个案判定不计入自动合计；反倾销/反补贴税按企业与产品范围个案判定，不计入自动合计。</div>
     <div class="result" id="qResult"></div>
   </div>
 
   <!-- 数据更新中心 -->
   <div class="card" id="updateCard">
     <h2>数据更新中心</h2>
-    <p class="upd-meta">数据基准：<b>2026-07-18（HTS 2026HTSRev11）</b>｜上次自动检查：<b id="lastCheck">从未</b></p>
+    <p class="upd-meta">数据基准：<b>2026-09-01（HTS 2026HTSRev17）</b>｜上次自动检查：<b id="lastCheck">从未</b></p>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn" id="btnCheck" onclick="runAutoCheck()">检查官方最新动态</button>
       <button class="btn ghost" onclick="downloadUpdReport()">下载更新检查报告</button>
@@ -68,9 +71,9 @@
     <table class="utab">
       <thead><tr><th>官方文件（点击即下载）</th><th>大小</th><th>导入后比对内容</th></tr></thead>
       <tbody>
-        <tr><td><a href="https://hts.usitc.gov/reststop/exportList?from=9901&amp;to=9922&amp;format=JSON&amp;styles=false" target="_blank" rel="noopener">① 第99章税目JSON（hts.usitc.gov）</a></td><td>约2MB</td><td>438个9903申报税目：232/301/122等措施的<b>新增、废止、税率变化</b></td></tr>
-        <tr><td><a href="https://hts.usitc.gov/reststop/getChapterNotes?doc=99" target="_blank" rel="noopener">② 第99章注释全文（hts.usitc.gov）</a></td><td>约4MB</td><td>注释2/16/20/31/33/37/38/39指纹：<b>清单覆盖范围</b>是否调整</td></tr>
-        <tr><td><a href="https://hts.usitc.gov/reststop/exportList?from=01&amp;to=97&amp;format=JSON&amp;styles=false" target="_blank" rel="noopener">③ MFN全表JSON（hts.usitc.gov）</a></td><td>约11MB</td><td>11,414个8位税号最惠国税率差异，<b>可直接应用到本系统</b>并下载更新后的数据文件</td></tr>
+        <tr><td><a href="https://hts.usitc.gov/reststop/exportList?from=9901&amp;to=9922&amp;format=JSON&amp;styles=false" target="_blank" rel="noopener">① 第99章税目JSON（hts.usitc.gov）</a></td><td>约2MB</td><td>565个9903申报税目：232/301/201等措施的<b>新增、废止、税率变化</b></td></tr>
+        <tr><td><a href="https://hts.usitc.gov/reststop/getChapterNotes?doc=99" target="_blank" rel="noopener">② 第99章注释全文（hts.usitc.gov）</a></td><td>约5MB</td><td>注释2/16/20/31/33/37/38/39/40/41/52指纹：<b>清单覆盖范围</b>是否调整</td></tr>
+        <tr><td><a href="https://hts.usitc.gov/reststop/exportList?from=01&amp;to=98&amp;format=JSON&amp;styles=false" target="_blank" rel="noopener">③ MFN全表JSON（hts.usitc.gov）</a></td><td>约11MB</td><td>11,414个8位税号最惠国税率差异，<b>可直接应用到本系统</b>并下载更新后的数据文件</td></tr>
       </tbody>
     </table>
     <div class="dropzone" id="dropzone">
@@ -99,10 +102,11 @@
     <div class="tabs">
       <button id="tab1" class="on" onclick="switchTab(0)">MFN全表（11,414）</button>
       <button id="tab2" onclick="switchTab(1)">301清单（10,008）</button>
-      <button id="tab3" onclick="switchTab(2)">232措施（1,061）</button>
+      <button id="tab3" onclick="switchTab(2)">232措施（1,169）</button>
       <button id="tab4" onclick="switchTab(3)">122例外（已到期）</button>
       <button id="tab6" onclick="switchTab(5)">301强迫劳动豁免（2,113）</button>
       <button id="tab5" onclick="switchTab(4)">301排除（178）</button>
+      <button id="tab7" onclick="switchTab(6)">201石英TRQ（2）</button>
     </div>
     <div class="filters">
       <input id="fText" placeholder="搜索税号或品名关键词（支持中文）…" oninput="renderBrowse(1)">
@@ -129,9 +133,10 @@
     <ol class="sop">
       <li><b>第1层 最惠国税率（MFN）</b>——所有进口适用，HTS第1—97章“General”栏；从量税（如¢/kg）需按数量另计。<div class="src">数据源：hts.usitc.gov（本库hts_base表）</div></li>
       <li><b>第2层 301关税</b>——清单1/2/3：25%；清单4A：7.5%；战略产业加税25%/50%/100%（电动车100%、光伏电池与半导体50%等）。178项排除可申请免征（2026-11-09到期）。<div class="src">依据：83 FR 28710等；89 FR 76581；89 FR 101682。数据源：HTS注释20/31（本库m301_*表）</div></li>
-      <li><b>第3层 232关税</b>——钢/铝/铜及制品50%、金属衍生品25%、工业与电气设备15%封顶（2027年底止）；汽车及零部件25%；中重型卡车25%/客车10%；软木10%；软包木家具与橱柜25%；先进计算芯片25%。金属类措施互不叠加。<div class="src">依据：Proclamation 10895/10896/10908/10962；FR 2025-19482/2025-19639/2026-01052/2026-06960/2026-11314。数据源：HTS注释16/33/37/38/39（本库m232_items表）</div></li>
+      <li><b>第3层 232关税</b>——钢/铝/铜及制品50%、金属衍生品25%、工业与电气设备15%封顶（2027年底止）；汽车及零部件25%；中重型卡车25%/客车10%；软木10%；软包木家具与橱柜25%；先进计算芯片25%；专利药及原料药100%（2026-07-31/09-29生效）；无人机及部件100%/25%（2026-09-03生效）；多晶硅及衍生品15%＋MIP最低限价（2026-12-04生效）。金属类措施互不叠加。<div class="src">依据：Proclamation 10895/10896/10908/10962/11055；91 FR 18183、91 FR 51975、91 FR 53699；FR 2025-19482/2025-19639/2026-01052/2026-06960/2026-11314。数据源：HTS注释16/33/37/38/39/40/42/43（本库m232_items表）</div></li>
       <li><b>第4层 Section 122普遍附加税（已到期停征）</b>——150天法定上限于2026-07-24届满，国会未授权延期，+10%普遍附加税已停止征收，不再计入叠加。<div class="src">依据：Proclamation 11012（FR 2026-03824）；19 U.S.C. §2132（150天上限）</div></li>
       <li><b>第5层 301强迫劳动关税（FLIP）+12.5%</b>——USTR 2026-07-23发布最终行动，对中国产品按9903.05.31加征12.5%，2026-07-24生效；与普通税率及其他99章关税、双反税叠加。<b>两类豁免</b>：①232行业覆盖产品（金属/汽车/零部件/木材/重卡/半导体，9903.05.90）不叠加；②2,113个8位税号产品豁免清单（9903.05.86/.87/.88/.89，含民用航空器、药品等）。在途豁免9903.05.85限2026-07-28前申报。<div class="src">依据：USTR联邦公报公告《301强迫劳动调查最终行动》（2026-07-23，注释52）；本库s301fl_exemptions表</div></li>
+      <li><b>第6层 201保障措施</b>——石英表面产品TRQ（2026-08-15生效）：配额内25%、超配额50%，逐年递减至2030-08-14，中国不在豁免名单；光伏电池/组件、洗衣机保障措施已届满。<div class="src">依据：Proclamation 2026-08-05（石英表面产品积极调整促进）；HTS注释41（本库m201_items表）</div></li>
       <li><b>已失效措施</b>——IEEPA（芬太尼10%＋对等10%）：SCOTUS 2026-02-20裁决违法，2026-02-24停征，已缴税款可经CAPE门户申请退还；201保障措施（光伏、洗衣机）：2026年2月届满。<div class="src">依据：SCOTUS Learning Resources v. Trump；CBP CSMS指引；HTS编译注释</div></li>
       <li><b>案外措施</b>——反倾销/反补贴税按“企业＋产品范围”个案判定（access.trade.gov）；UFLPA强迫劳动扣留按供应链证据判定。二者不纳入自动合计。<div class="src">数据源：商务部ADCVD案件清单；CBP UFLPA统计</div></li>
     </ol>
@@ -140,7 +145,7 @@
   <!-- 下载 -->
   <div class="card">
     <h2>数据下载</h2>
-    <p style="font-size:13.5px;margin-bottom:10px">SQLite数据库（us_china_tariffs.db，约4MB）含11张表：hts_base（11,414）、m301_list（10,008）、m301_strategic（392）、m301_exclusions（178）、m232_items（1,061）、s122_exceptions（1,097，已到期）、s301fl_exemptions（2,113，301强迫劳动豁免清单）、cn_names（11,414条中文参考品名）、meta、sources。</p>
+    <p style="font-size:13.5px;margin-bottom:10px">SQLite数据库（us_china_tariffs.db，约4MB）含12张表：hts_base（11,414）、m301_list（10,008）、m301_strategic（392）、m301_exclusions（178）、m232_items（1,169，含药品/无人机/多晶硅）、m201_items（2，石英TRQ）、s122_exceptions（1,097，已到期）、s301fl_exemptions（2,113，301强迫劳动豁免清单）、cn_names（11,414条中文参考品名）、meta、sources。</p>
     <div class="dl">
       <a href="us_china_tariffs.db" download>下载SQLite数据库</a>
       <a href="assets/data.js" download>下载JSON数据源</a>
@@ -151,7 +156,7 @@
 
 <footer>
   <div class="wrap">
-    数据源：HTSUS第1—97章及第99章第三分章注释2/16/20/31/33/37/38/39/52（hts.usitc.gov）；USTR联邦公报公告（含2026-07-23《301强迫劳动调查最终行动》）；总统公告10895/10896/10908/10962/11012及FR 2025-19482、2025-19639、2026-01052、2026-03824、2026-06960、2026-11314；CBP CSMS指引。<br>
+    数据源：HTSUS第1—97章及第99章第三分章注释2/16/20/31/33/37/38/39/40/41/52（hts.usitc.gov，2026HTSRev17）；USTR联邦公报公告（含2026-07-23《301强迫劳动调查最终行动》）；总统公告10895/10896/10908/10962/11012/11055及91 FR 18183、91 FR 51975、91 FR 53699、FR 2025-19482、2025-19639、2026-01052、2026-03824、2026-06960、2026-11314；CBP CSMS指引。<br>
     本系统计算结果供贸易合规参考，不构成法律意见；报关前请以hts.usitc.gov及CBP最新指引最终确认。301按“中国原产”认定，与起运地无关；232/122按进口产品本身适用。
   </div>
 </footer>

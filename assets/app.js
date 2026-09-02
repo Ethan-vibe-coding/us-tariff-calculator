@@ -1,7 +1,8 @@
-/* 中国输美产品关税叠加计算引擎（数据基准日 2026-07-18） */
+/* 中国输美产品关税叠加计算引擎（数据基准日 2026-09-01，HTS 2026HTSRev17） */
 const BASE_MAP = new Map(); BASE.forEach(r=>BASE_MAP.set(r[0],[r[1],r[2]]));
 const M301L_MAP = new Map(); M301L.forEach(r=>M301L_MAP.set(r[0],[r[1],r[2]]));
 const M232_MAP = new Map(); M232.forEach(r=>{if(!M232_MAP.has(r[0]))M232_MAP.set(r[0],[]);M232_MAP.get(r[0]).push(r);});
+const M201_MAP = new Map(); (typeof M201!=='undefined'?M201:[]).forEach(r=>{if(!M201_MAP.has(r[0]))M201_MAP.set(r[0],[]);M201_MAP.get(r[0]).push(r);});
 const EX122_SET = new Set(EX122);
 const EX301FL_SET = new Set(EX301FL);
 const CHNAME = {'84':'机器机械','85':'电机电气','86':'铁路装备','87':'车辆','88':'航空器','89':'船舶','90':'仪器仪表','72':'钢铁','73':'钢铁制品','76':'铝及其制品','74':'铜及其制品','29':'有机化学品','30':'药品','94':'家具寝具','44':'木及木制品','39':'塑料制品','62':'梭织服装','61':'针织服装'};
@@ -80,21 +81,32 @@ function calc(raw){
   r.exclHit = exclHit;
   // 3. 232
   let has232 = false;
+  let uasNoted = false;
   const m232items = M232_MAP.get(n.c8) || [];
   for(const it of m232items){
     let add = null, addText = it[2];
-    if(it[1].indexOf('15%封顶')>=0 || it[2].indexOf('max')>=0){
+    if(it[1].indexOf('药品')>=0){
+      add = null; addText = '专利药+100%；仿制药0';
+      r.notes.push('232药品：专利药及其原料药/关键起始物料100%（按FDA橙皮书/紫皮书个案判定是否“专利药”）；仿制药经9903.04.67不加征。大企业2026-07-31、其他企业2026-09-29起生效。');
+    }
+    else if(it[2].indexOf('MIP')>=0 || it[2].indexOf('从量')>=0){
+      add = null; addText = it[2]+'（2026-12-04生效）';
+      r.notes.push('232多晶硅及衍生品（Proclamation 2026-08-06，91 FR 51975）：'+it[3]+'，2026-12-04生效；MIP最低进口价格机制——申报价低于最低限价或未提交转售文件时按从量标准（$21/kg、$100/kg、$0.22/W、$0.38/W）征收。');
+    }
+    else if(it[1].indexOf('15%封顶')>=0 || it[2].indexOf('max')>=0){
       add = Math.max(0, 15 - mfnPct); addText = (add===0?'0':'+'+add+'%')+'（补至15%）';
     } else { add = parseFloat(it[2]); addText = '+'+it[2]; }
-    r.rows.push({layer:'232关税（'+it[1]+'）', rate:it[2], add, addText, basis:it[4]+'｜'+it[5]+(it[6]?'｜'+it[6]:''), zero:add===0});
-    if(add>0) has232 = true; else has232 = has232 || true; // 覆盖即豁免122
+    if(!uasNoted && (it[5]||'').indexOf('2026-09-03生效')>=0){ uasNoted = true; r.notes.push('232无人机关税（Proclamation 11055）自2026-09-03起对消费申报生效；无人机部件中除>25kg机型部件外的其他部件自2027-02-09起按25%（注释43(c)(5)）。'); }
+    r.rows.push({layer:'232关税（'+it[1]+'）', rate:it[2], add, addText, basis:it[4]+'｜'+it[5]+(it[6]?'｜'+it[6]:''), zero:!(add>0)});
+    has232 = true;
   }
-  if(m232items.length) has232 = true;
+  // 232行业中“金属/汽车/零部件/木材/重卡/半导体/专利药”覆盖产品不叠加301FL（注释52(f)）；232无人机、232多晶硅不在豁免范围
+  const fl232ex = m232items.some(it=>it[1].indexOf('无人机')<0 && it[1].indexOf('多晶硅')<0);
   // 4. Section 122（2026-07-24法定到期，停止征收）
   r.rows.push({layer:'Section 122普遍附加税', rate:'已到期', add:0, addText:'0', basis:'150天法定上限于2026-07-24届满，国会未授权延期，已停止征收（9903.03.01失效）', zero:true});
   // 4b. 301强迫劳动（FLIP，2026-07-24生效，中国+12.5%）
-  if(m232items.length){
-    r.rows.push({layer:'301强迫劳动关税（FLIP）', rate:'12.5%', add:0, addText:'0（豁免）', basis:'9903.05.90：232行业（金属/汽车/零部件/木材/重卡/半导体）覆盖产品不叠加（注释52(f)）', zero:true});
+  if(fl232ex){
+    r.rows.push({layer:'301强迫劳动关税（FLIP）', rate:'12.5%', add:0, addText:'0（豁免）', basis:'9903.05.90：232行业（金属/汽车/零部件/木材/重卡/半导体/专利药）覆盖产品不叠加（注释52(f)）', zero:true});
   } else if(EX301FL_SET.has(n.c8)){
     r.rows.push({layer:'301强迫劳动关税（FLIP）', rate:'12.5%', add:0, addText:'0（豁免）', basis:'9903.05.86/.87/.88/.89：产品豁免清单（注释52(b)-(e)，含民用航空器、药品等）', zero:true});
   } else {
@@ -102,18 +114,24 @@ function calc(raw){
   }
   // 5. IEEPA（已终止）
   r.rows.push({layer:'IEEPA（芬太尼10%＋对等10%）', rate:'已终止', add:0, addText:'0', basis:'SCOTUS 2026-02-20裁决（Learning Resources v. Trump）；CBP 2026-02-24停征；已缴税款可经CAPE门户申请退还', zero:true});
-  // 6. 201（已到期）
+  // 6. 201保障措施
   if(['8541.42.00','8541.43.00'].indexOf(n.c8)>=0)
     r.rows.push({layer:'201保障措施（光伏电池/组件）', rate:'已到期', add:0, addText:'0', basis:'2026年2月届满（HTS编译注释）；如需请复核USTR是否延期', zero:true});
   if(['8450.11.00','8450.19.00','8450.20.00'].indexOf(n.c8)>=0)
     r.rows.push({layer:'201保障措施（洗衣机）', rate:'已到期', add:0, addText:'0', basis:'2023年2月届满', zero:true});
+  // 6b. 201石英表面产品TRQ（2026-08-15生效，Proclamation 2026-08-05）
+  const m201items = M201_MAP.get(n.c8) || [];
+  for(const q of m201items){
+    r.rows.push({layer:'201保障措施（石英表面产品TRQ）', rate:q[2], add:null, addText:'配额内+25%／超配额+50%', basis:q[4]+'｜'+q[5]+(q[6]?'｜'+q[6]:''), zero:true});
+    r.notes.push('201石英表面产品保障措施（2026-08-15生效）：配额内（9903.45.30）第一年+25%、超配额（9903.45.31）+50%，税率逐年递减（25/23/21/19与50/49/48/47，至2030-08-14）；中国不在豁免国名单。配额按季度管理，是否计入合计取决于申报时配额余额。');
+  }
   // 7. 双反
   r.rows.push({layer:'反倾销/反补贴税', rate:'个案判定', add:null, addText:'—', basis:'按“企业＋产品范围”判定（access.trade.gov案件清单），不纳入自动合计', zero:true});
   // 合计
   let total = 0; const parts = [];
   for(const row of r.rows){ if(row.add){ total += row.add; parts.push(row.addText.replace(/（.*$/,'').replace('+','')); } }
   r.total = total; r.has232 = has232;
-  r.notes.push('总叠加值＝各行从价税率之和（简单相加）；从量税、双反税、UFLPA扣留不计入。Section 122已于2026-07-24法定到期停征；301强迫劳动关税（中国+12.5%）自2026-07-24起生效，232覆盖产品及豁免清单内产品不叠加。');
+  r.notes.push('总叠加值＝各行从价税率之和（简单相加）；从量税、双反税、UFLPA扣留不计入。Section 122已于2026-07-24法定到期停征；301强迫劳动关税（中国+12.5%）自2026-07-24起生效，232行业覆盖产品（金属/汽车/零部件/木材/重卡/半导体/专利药）及豁免清单内产品不叠加；232无人机、232多晶硅（12/4生效）不在301FL豁免范围。232药品（专利药100%）、201石英TRQ、232多晶硅MIP从量税按个案判定，不计入自动合计。');
   return r;
 }
 
@@ -188,7 +206,7 @@ function exportCSV(){
 /* ---------- 浏览 ---------- */
 let bTab=0, bPage=1; const PER=50;
 function switchTab(i){ bTab=i; bPage=1;
-  for(let k=1;k<=6;k++){ const idx=(k<=5?k-1:5); document.getElementById('tab'+k).className=(idx===i?'on':''); }
+  for(let k=1;k<=7;k++){ document.getElementById('tab'+k).className=((k-1)===i?'on':''); }
   document.getElementById('fMeas').style.display = (i===2?'':'none');
   renderBrowse(1);
 }
@@ -201,6 +219,7 @@ function browseData(){
   if(bTab===2) return M232.filter(r=>(!ch||r[0].slice(0,2)===ch)&&(!fm||r[1]===fm)&&(!q||r[0].includes(q)||(r[1]||'').toLowerCase().includes(q)));
   if(bTab===3) return EX122.filter(c=>(!ch||c.slice(0,2)===ch)&&(!q||c.includes(q)));
   if(bTab===5) return EX301FL.filter(c=>(!ch||c.slice(0,2)===ch)&&(!q||c.includes(q)||(typeof CNAMES!=='undefined'&&(CNAMES[c]||'').includes(q))));
+  if(bTab===6) return (typeof M201!=='undefined'?M201:[]).filter(r=>(!ch||r[0].slice(0,2)===ch)&&(!q||r[0].includes(q)||(r[1]||'').toLowerCase().includes(q)||(typeof CNAMES!=='undefined'&&(CNAMES[r[0]]||'').includes(q))));
   return M301X.filter(r=>!q||(r[4]||'').toLowerCase().includes(q)||(r[5]||'').toLowerCase().includes(q));
 }
 function renderBrowse(p){
@@ -220,6 +239,8 @@ function renderBrowse(p){
     for(const c of slice){ const b=BASE_MAP.get(c); h+='<tr><td>'+c+'</td><td style="font-size:11.5px">'+esc(b?b[1].slice(0,120):'')+'</td></tr>'; } }
   else if(bTab===5){ h+='<tr><th>8位子目</th><th>品名（中文参考）</th><th>品名（英文HTS）</th></tr>';
     for(const c of slice){ const b=BASE_MAP.get(c); h+='<tr><td>'+c+'</td><td>'+esc((typeof CNAMES!=='undefined'&&CNAMES[c])||'')+'</td><td style="font-size:11.5px">'+esc(b?b[2].slice(0,100):'')+'</td></tr>'; } }
+  else if(bTab===6){ h+='<tr><th>8位子目</th><th>201措施</th><th>税率</th><th>9903税目</th><th>品名（中文参考）</th><th>备注</th></tr>';
+    for(const r of slice) h+='<tr><td>'+r[0]+'</td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td><td>'+esc(r[4])+'</td><td>'+esc((typeof CNAMES!=='undefined'&&CNAMES[r[0]])||'')+'</td><td style="font-size:11px">'+esc(r[6]||'')+'</td></tr>'; }
   else{ h+='<tr><th>排除类别</th><th>序号</th><th>产品描述（英文，为裁定依据）</th><th>涉及统计号</th></tr>';
     for(const r of slice) h+='<tr><td>'+esc(r[0])+'</td><td>'+r[3]+'</td><td>'+esc(r[4])+'</td><td>'+esc(r[5])+'</td></tr>'; }
   h += '</table>';
@@ -238,8 +259,12 @@ function renderStats(){
     ['301战略产业加税', M301S.length],
     ['232金属50%', M232.filter(r=>r[1].indexOf('50%')>=0&&r[1].indexOf('金属（')>=0).length],
     ['232金属衍生品25%', M232.filter(r=>r[1].indexOf('衍生品')>=0&&r[2]==='25%').length],
-    ['232机电设备15%封顶', M232.filter(r=>r[1].indexOf('15%封顶')>=0).length],
-    ['232汽车/卡车/木材/家具/半导体', M232.filter(r=>r[1].indexOf('金属')<0).length],
+    ['232工业与电气设备衍生品', M232.filter(r=>r[1].indexOf('工业与电气设备')>=0).length],
+    ['232汽车/卡车/木材/家具/半导体', M232.filter(r=>r[1].indexOf('金属')<0&&r[1].indexOf('药品')<0&&r[1].indexOf('无人机')<0&&r[1].indexOf('多晶硅')<0).length],
+    ['232药品（专利药100%）', M232.filter(r=>r[1].indexOf('药品')>=0).length],
+    ['232无人机（100%/25%）', M232.filter(r=>r[1].indexOf('无人机')>=0).length],
+    ['232多晶硅及衍生品（12/4生效）', M232.filter(r=>r[1].indexOf('多晶硅')>=0).length],
+    ['201石英表面产品TRQ', (typeof M201!=='undefined'?M201:[]).length],
     ['Section 122产品例外（已到期）', EX122.length],
     ['301强迫劳动豁免清单', EX301FL.length],
     ['301排除', M301X.length],

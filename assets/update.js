@@ -3,7 +3,7 @@
  * 数据源：① 联邦公报API（浏览器直连，CORS开放）
  *         ② USITC HTS接口（经公共代理尝试；失败时走文件导入）
  *         ③ 官方文件导入比对（用户点击官网链接下载后拖入页面，本地比对）
- * 比对基准：HTS 2026HTSRev11（2026-07-18），常量 HTS_REV / C99SNAP / FP99
+ * 比对基准：HTS 2026HTSRev17（2026-09-01），常量 HTS_REV / C99SNAP / FP99
  * ============================================================ */
 const UPD = { fr:null, rev:null, c99:null, notes:null, mfn:null, mfnRemote:null, applied:false };
 
@@ -221,7 +221,7 @@ function notesFingerprint(html){
   }
   return fp;
 }
-const NOTE_NAMES = {'2':'注释2（122附加税及例外清单）','16':'注释16（232金属）','20':'注释20（301清单1-4A）','31':'注释31（301战略产业）','33':'注释33（232汽车/卡车）','37':'注释37（232木材/家具）','38':'注释38（232半导体等）','39':'注释39（232机电设备）'};
+const NOTE_NAMES = {'2':'注释2（122附加税及例外清单）','16':'注释16（232金属）','20':'注释20（301清单1-4A）','31':'注释31（301战略产业）','33':'注释33（232汽车/卡车）','37':'注释37（232木材/家具）','38':'注释38（232中重型卡车）','39':'注释39（232半导体）','40':'注释40（232药品）','41':'注释41（201石英表面产品TRQ）','52':'注释52（301强迫劳动FLIP）'};
 function importNotesHtml(text, name){
   try{
     const fp = notesFingerprint(text);
@@ -233,7 +233,7 @@ function importNotesHtml(text, name){
     }
     UPD.notes = {fp, diffs, fname:name};
     if(!diffs.length){
-      impLog('注释指纹比对完成：8个关键注释（2/16/20/31/33/37/38/39）与本地基准<b>完全一致</b>，清单覆盖范围无变化。','ok');
+      impLog('注释指纹比对完成：11个关键注释（2/16/20/31/33/37/38/39/40/41/52）与本地基准<b>完全一致</b>，清单覆盖范围无变化。','ok');
     }else{
       impLog('注释指纹比对完成：<b class="warn">'+diffs.length+' 个注释发生变化</b>——清单覆盖范围可能调整，需重新生成数据库','w');
       for(const d of diffs){
@@ -307,8 +307,12 @@ function downloadUpdatedData(){
   parts.push('const M301S='+JSON.stringify(M301S)+';');
   parts.push('const M301X='+JSON.stringify(M301X)+';');
   parts.push('const M232='+JSON.stringify(M232)+';');
+  parts.push('const M201='+JSON.stringify(typeof M201!=='undefined'?M201:[])+';');
   parts.push('const EX122='+JSON.stringify(EX122)+';');
-  parts.push('// —— 数据更新比对基准（HTS 2026HTSRev11，2026-07-18生成）——');
+  parts.push('const EX301FL='+JSON.stringify(EX301FL)+';');
+  parts.push('const EX301FL_A='+JSON.stringify(typeof EX301FL_A!=='undefined'?EX301FL_A:{})+';');
+  parts.push('const CNAMES='+JSON.stringify(typeof CNAMES!=='undefined'?CNAMES:{})+';');
+  parts.push('// —— 数据更新比对基准（'+HTS_REV+'）——');
   parts.push('const HTS_REV='+JSON.stringify(HTS_REV)+';');
   parts.push('const C99SNAP='+JSON.stringify(UPD.c99?UPD.c99.remote:C99SNAP)+';');
   parts.push('const FP99='+JSON.stringify(UPD.notes?UPD.notes.fp:FP99)+';');
@@ -328,7 +332,7 @@ function renderImpResult(){
   if(UPD.c99){
     const c = UPD.c99; const t = c.news.length+c.gone.length+c.changed.length;
     html += '<h3>第99章税目比对（232/301/122等措施申报税目）</h3>';
-    if(!t) html += '<p class="ok">438个9903税目与基准一致，措施层面无变化。</p>';
+    if(!t) html += '<p class="ok">565个9903税目与基准一致，措施层面无变化。</p>';
     else{
       html += '<table class="utab"><thead><tr><th>变化类型</th><th>税目</th><th>税率变化</th></tr></thead><tbody>';
       for(const h of c.news) html += '<tr class="newdoc"><td class="warn">新增</td><td>'+esc(h)+'</td><td>'+esc(pctOf(c.remote[h]))+'</td></tr>';
@@ -341,7 +345,7 @@ function renderImpResult(){
   if(UPD.notes){
     const ds = UPD.notes.diffs;
     html += '<h3>第99章注释指纹比对（清单覆盖范围）</h3>';
-    if(!ds.length) html += '<p class="ok">8个关键注释完全一致，清单覆盖范围无变化。</p>';
+    if(!ds.length) html += '<p class="ok">11个关键注释完全一致，清单覆盖范围无变化。</p>';
     else{
       html += '<table class="utab"><thead><tr><th>注释</th><th>8位编码数</th><th>10位编码数</th><th>文本哈希</th></tr></thead><tbody>';
       for(const d of ds){
@@ -404,7 +408,7 @@ function downloadUpdReport(){
   }
   if(UPD.notes){
     L.push('## '+CN[sec++]+'、注释指纹比对（文件：'+UPD.notes.fname+'）');
-    if(!UPD.notes.diffs.length) L.push('8个关键注释完全一致。');
+    if(!UPD.notes.diffs.length) L.push('11个关键注释完全一致。');
     for(const d of UPD.notes.diffs) L.push(d.missing? ('- '+(NOTE_NAMES[d.n]||d.n)+'：远端缺失') : ('- '+(NOTE_NAMES[d.n]||d.n)+'：8位 '+d.a[0]+'→'+d.b[0]+'，10位 '+d.a[1]+'→'+d.b[1]+'，哈希变化'));
     L.push('');
   }
