@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 语法检查
+        run: |
+          node --check assets/app.js
+          node --check assets/data.js
+          node --check assets/update.js
+      - name: 关税引擎回归测试
+        run: node tests/tariff.test.js

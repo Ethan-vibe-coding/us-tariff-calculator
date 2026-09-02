@@ -1,0 +1,14 @@
+{
+  "name": "us-tariff-calculator",
+  "version": "2026.9.1",
+  "description": "中国输美产品关税叠加计算查询系统（纯静态站点）",
+  "private": true,
+  "scripts": {
+    "test": "node tests/tariff.test.js",
+    "serve": "python3 -m http.server 8000"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

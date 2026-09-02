@@ -1,0 +1,22 @@
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+
+# 依赖与构建（本项目为纯静态站点，无构建产物；预留）
+node_modules/
+dist/
+
+# 临时文件
+*.log
+*.tmp
+~$*
+
+# 数据更新中心的本地临时文件
+/tmp/
+downloads/
